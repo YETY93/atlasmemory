@@ -31,6 +31,16 @@ const DEST = path.resolve(destArg)
 console.log(`Instalando atlasmemory en: ${DEST}`)
 console.log(`Desde plantilla: ${SRC}`)
 
+/** ¿El archivo de reglas ya menciona la memoria? Evita avisos en falso. */
+function mentionsMemory(file) {
+  try {
+    const txt = fs.readFileSync(file, "utf8")
+    return /catalog_exists|atlasmemory/i.test(txt)
+  } catch {
+    return false
+  }
+}
+
 /** Lee un JSON existente; null si no existe o es ilegible. */
 function readJsonSafe(file) {
   try {
@@ -109,15 +119,18 @@ const FILES = [
   { rel: ".mcp.json", merge: mergeMcpJson },
   { rel: ".claude/skills/reuse-first/SKILL.md" },
   // Reglas por cliente — personalizables: no pisar si existen
-  { rel: "AGENTS.md", keep: true, placeholders: true },
-  { rel: "CLAUDE.md", keep: true, placeholders: true },
+  { rel: "AGENTS.md", keep: true, placeholders: true, needsSnippet: "OpenCode" },
+  { rel: "CLAUDE.md", keep: true, placeholders: true, needsSnippet: "Claude Code" },
   // Documentación (opcional)
   { rel: "docs/arquetipo-catalogo-agente.md", optional: true },
+  { rel: "docs/snippet-memoria.md", optional: true },
 ]
 
 let copied = 0
 let skipped = 0
 let merged = 0
+/** Archivos de reglas preservados: requieren pegar el snippet a mano. */
+const needsSnippet = []
 
 for (const f of FILES) {
   const from = path.join(SRC, f.rel)
@@ -148,8 +161,13 @@ for (const f of FILES) {
   }
 
   if (fs.existsSync(to) && f.keep && !force) {
-    console.log(`  skip (existe): ${f.rel}`)
+    // Solo avisar si el archivo preservado NO menciona ya la memoria.
+    const missingRule = f.needsSnippet && !mentionsMemory(to)
+    console.log(
+      `  skip (existe): ${f.rel}  (${missingRule ? "SIN regla de memoria — ver aviso abajo" : "se preserva tu documentación"})`
+    )
     skipped++
+    if (missingRule) needsSnippet.push(f)
     continue
   }
   if (fs.existsSync(to) && !force && !f.keep) {
@@ -167,6 +185,27 @@ for (const f of FILES) {
 
 console.log("")
 console.log(`Resumen: ${copied} copiados, ${merged} fusionados, ${skipped} omitidos.`)
+
+if (needsSnippet.length) {
+  const snippet = path.join(DEST, "docs", "snippet-memoria.md")
+  const hasSnippet = fs.existsSync(snippet)
+  console.log("")
+  console.log("=".repeat(72))
+  console.log("!!  ACCION REQUERIDA — la memoria quedo instalada pero NO anunciada")
+  console.log("=".repeat(72))
+  for (const f of needsSnippet) {
+    console.log(`    ${f.rel} ya existia y no se modifico (${f.needsSnippet}).`)
+  }
+  console.log("")
+  console.log("    Tu agente tiene las tools, pero le falta la regla permanente que")
+  console.log("    le dice que consulte la memoria antes de crear componentes.")
+  console.log("")
+  console.log("    Copia el bloque de:")
+  console.log(`      ${hasSnippet ? snippet : path.join(SRC, "docs", "snippet-memoria.md")}`)
+  console.log(`    y pegalo al final de: ${needsSnippet.map((f) => f.rel).join(" y ")}`)
+  console.log("=".repeat(72))
+}
+
 console.log("")
 console.log("Siguiente:")
 console.log("  1. Edita AGENTS.md y CLAUDE.md (descripción, build, invariantes)")
