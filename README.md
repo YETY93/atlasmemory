@@ -1,6 +1,6 @@
 # atlasmemory
 
-**Memoria Inteligente del Proyecto** para agentes de IA (OpenCode y similares).
+**Memoria Inteligente del Proyecto** para agentes de IA — **OpenCode** y **Claude Code**.
 
 > **El agente consulta conocimiento, no redescubre el repositorio.**
 
@@ -12,10 +12,41 @@ No es un monorepo de negocio (p. ej. Clarisa): es solo la plantilla de memoria +
 
 Cuando un agente necesita un adaptador o caso de uso, suele crearlo de cero aunque ya exista. atlasmemory indexa el código y expone tools para reutilizar lo existente.
 
+## Arquitectura: un núcleo, dos clientes
+
+Un solo indexer y un solo store, con un **binding de consulta por cliente**. Añadir un cliente nuevo es aditivo: no toca los existentes.
+
+```text
+        scripts/index-catalog.mjs          ← indexer (uno solo)
+                    │
+                    ▼
+     .opencode/memory/catalog.json          ← store compartido (uno solo)
+            │                    │
+            ▼                    ▼
+  .opencode/tools/catalog.ts    mcp/server.mjs
+     (plugin OpenCode)         (servidor MCP → Claude Code)
+```
+
+| Pieza | OpenCode | Claude Code | Compartido |
+|-------|----------|-------------|------------|
+| Indexer | — | — | `scripts/index-catalog.mjs` |
+| Store | — | — | `.opencode/memory/catalog.json` |
+| Config | `.opencode/opencode.json` | `.mcp.json` | — |
+| Tools | `.opencode/tools/catalog.ts` | `mcp/server.mjs` | — |
+| Reglas | `AGENTS.md` | `CLAUDE.md` | — |
+| Skill | `.opencode/skills/reuse-first/` | `.claude/skills/reuse-first/` | — |
+
+Las tools son las mismas cinco en ambos clientes. En Claude Code llevan el prefijo del servidor MCP: `mcp__atlasmemory__catalog_exists`, etc.
+
+> **Nota sobre el store:** `catalog.json` vive bajo `.opencode/memory/` por razones
+> históricas (fue el primer binding), pero su contenido es **agnóstico de cliente** y
+> lo consumen ambos. Renombrar esa ruta a algo neutro (`.atlasmemory/`) está previsto
+> para una v2, porque tocaría los tres archivos a la vez.
+
 ## Requisitos
 
 - Node.js 18+ (probado con 22)
-- OpenCode con custom tools (`.opencode/tools/`)
+- **OpenCode** con custom tools (`.opencode/tools/`), y/o **Claude Code** con MCP
 - Fuentes en `*/src/main/java/**/*.java`
 
 ## Contenido
@@ -25,17 +56,23 @@ atlasmemory/
 ├── README.md
 ├── LICENSE
 ├── install.sh
-├── AGENTS.md
+├── AGENTS.md                      ← reglas (OpenCode)
+├── CLAUDE.md                      ← reglas (Claude Code)
+├── .mcp.json                      ← registro del servidor MCP
 ├── docs/
 │   ├── arquetipo-catalogo-agente.md
 │   ├── evaluacion-scripts.md
 │   └── mejoras-catalogo-2026-07.md
 ├── scripts/
-│   ├── index-catalog.mjs
+│   ├── index-catalog.mjs          ← compartido
 │   └── smoke-catalog.mjs
+├── mcp/
+│   └── server.mjs                 ← binding Claude Code (sin dependencias)
+├── .claude/
+│   └── skills/reuse-first/SKILL.md
 └── .opencode/
     ├── opencode.json
-    ├── tools/catalog.ts
+    ├── tools/catalog.ts           ← binding OpenCode
     ├── skills/reuse-first/SKILL.md
     └── memory/.gitignore
 ```
@@ -55,7 +92,7 @@ cd atlasmemory
 Copia manual:
 
 ```bash
-cp -r scripts .opencode AGENTS.md /ruta/al/proyecto/
+cp -r scripts .opencode .claude mcp .mcp.json AGENTS.md CLAUDE.md /ruta/al/proyecto/
 # opcional: docs/
 ```
 
@@ -63,21 +100,29 @@ En el proyecto destino:
 
 ```bash
 cd /ruta/al/proyecto
-# 1. Editar AGENTS.md (placeholders {{PROJECT_*}})
+# 1. Editar AGENTS.md y CLAUDE.md (placeholders {{PROJECT_*}})
 node scripts/index-catalog.mjs
 node scripts/smoke-catalog.mjs
+
+# 2a. OpenCode
 opencode
+
+# 2b. Claude Code — reinicia para que cargue .mcp.json y aprueba el servidor
+claude
 ```
+
+> `install.sh` **no sobrescribe** `AGENTS.md` ni `CLAUDE.md` si ya existen (salvo `--force`),
+> para no pisar la documentación propia del proyecto destino.
 
 ## Tools
 
-| Tool | Uso |
-|------|-----|
-| `catalog_exists` | **Siempre** antes de crear Data/port/UC/entity/mapper |
-| `catalog_search` | Explorar por nombre, método o tag |
-| `catalog_get` | Detalle + métodos |
-| `catalog_related` | implements / uses / produces / extends |
-| `catalog_reindex` | Tras cambios estructurales |
+| Tool (OpenCode) | Tool (Claude Code) | Uso |
+|------|------|-----|
+| `catalog_exists` | `mcp__atlasmemory__catalog_exists` | **Siempre** antes de crear Data/port/UC/entity/mapper |
+| `catalog_search` | `mcp__atlasmemory__catalog_search` | Explorar por nombre, método o tag |
+| `catalog_get` | `mcp__atlasmemory__catalog_get` | Detalle + métodos |
+| `catalog_related` | `mcp__atlasmemory__catalog_related` | implements / uses / produces / extends |
+| `catalog_reindex` | `mcp__atlasmemory__catalog_reindex` | Tras cambios estructurales |
 
 ## Demo mínima
 

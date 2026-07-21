@@ -42,6 +42,7 @@ copy_file "$SRC/.opencode/memory/.gitignore" "$DEST/.opencode/memory/.gitignore"
 # Binding Claude Code (MCP) — aditivo, comparte el mismo catalog.json
 copy_file "$SRC/mcp/server.mjs" "$DEST/mcp/server.mjs"
 copy_file "$SRC/.mcp.json" "$DEST/.mcp.json"
+copy_file "$SRC/.claude/skills/reuse-first/SKILL.md" "$DEST/.claude/skills/reuse-first/SKILL.md"
 
 if [[ ! -f "$DEST/AGENTS.md" || "$FORCE" == "--force" ]]; then
   if [[ -f "$DEST/AGENTS.md" && "$FORCE" == "--force" ]]; then
