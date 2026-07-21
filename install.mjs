@@ -31,9 +31,68 @@ const DEST = path.resolve(destArg)
 console.log(`Instalando atlasmemory en: ${DEST}`)
 console.log(`Desde plantilla: ${SRC}`)
 
+/** Lee un JSON existente; null si no existe o es ilegible. */
+function readJsonSafe(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"))
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Fusiona `.mcp.json`: conserva los servidores del proyecto y añade/actualiza
+ * solo `mcpServers.atlasmemory`. Nunca elimina servidores ajenos.
+ * @returns {{content: string, note: string}|null} null = sin cambios necesarios
+ */
+function mergeMcpJson(destFile, srcFile) {
+  const src = readJsonSafe(srcFile) || {}
+  const existing = readJsonSafe(destFile)
+  if (!existing) return null // ilegible o inexistente → copia normal
+
+  const ours = src.mcpServers?.atlasmemory
+  const servers = { ...(existing.mcpServers || {}) }
+  const before = JSON.stringify(servers.atlasmemory || null)
+  servers.atlasmemory = ours
+  if (JSON.stringify(servers.atlasmemory) === before) {
+    return { content: null, note: "ya estaba registrado, sin cambios" }
+  }
+  const merged = { ...existing, mcpServers: servers }
+  const others = Object.keys(servers).filter((k) => k !== "atlasmemory")
+  return {
+    content: JSON.stringify(merged, null, 2) + "\n",
+    note: others.length
+      ? `fusionado (conserva: ${others.join(", ")})`
+      : "fusionado",
+  }
+}
+
+/**
+ * Fusiona `opencode.json`: conserva la config del proyecto y asegura que
+ * `instructions` incluya AGENTS.md y CLAUDE.md, sin duplicar ni reordenar.
+ */
+function mergeOpencodeJson(destFile, srcFile) {
+  const src = readJsonSafe(srcFile) || {}
+  const existing = readJsonSafe(destFile)
+  if (!existing) return null
+
+  const wanted = Array.isArray(src.instructions) ? src.instructions : []
+  const current = Array.isArray(existing.instructions) ? existing.instructions : []
+  const missing = wanted.filter((i) => !current.includes(i))
+  if (missing.length === 0) {
+    return { content: null, note: "instructions ya cubiertas, sin cambios" }
+  }
+  const merged = { ...existing, instructions: [...current, ...missing] }
+  return {
+    content: JSON.stringify(merged, null, 2) + "\n",
+    note: `fusionado (+ instructions: ${missing.join(", ")})`,
+  }
+}
+
 /**
  * Archivos a copiar. `keep:true` = no sobrescribir si ya existe (salvo --force),
  * porque es contenido que el proyecto destino personaliza.
+ * `merge` = si ya existe, fusionar en vez de copiar/omitir (config acumulativa).
  */
 const FILES = [
   // Núcleo compartido
@@ -43,11 +102,11 @@ const FILES = [
   // Binding OpenCode
   { rel: ".opencode/tools/catalog.ts" },
   { rel: ".opencode/skills/reuse-first/SKILL.md" },
-  { rel: ".opencode/opencode.json" },
+  { rel: ".opencode/opencode.json", merge: mergeOpencodeJson },
   { rel: ".opencode/memory/.gitignore" },
   // Binding Claude Code (MCP)
   { rel: "mcp/server.mjs" },
-  { rel: ".mcp.json" },
+  { rel: ".mcp.json", merge: mergeMcpJson },
   { rel: ".claude/skills/reuse-first/SKILL.md" },
   // Reglas por cliente — personalizables: no pisar si existen
   { rel: "AGENTS.md", keep: true, placeholders: true },
@@ -58,12 +117,35 @@ const FILES = [
 
 let copied = 0
 let skipped = 0
+let merged = 0
 
 for (const f of FILES) {
   const from = path.join(SRC, f.rel)
   const to = path.join(DEST, f.rel)
 
   if (f.optional && !fs.existsSync(from)) continue
+
+  // Config acumulativa: fusionar en vez de copiar/omitir. Nunca pierde config ajena.
+  if (f.merge && fs.existsSync(to)) {
+    const result = f.merge(to, from)
+    if (result) {
+      if (result.content) {
+        fs.writeFileSync(to, result.content)
+        console.log(`  merge: ${f.rel}  (${result.note})`)
+        merged++
+      } else {
+        console.log(`  ok (sin cambios): ${f.rel}  (${result.note})`)
+        skipped++
+      }
+      continue
+    }
+    // JSON ilegible → no lo tocamos sin permiso explícito
+    if (!force) {
+      console.log(`  skip (ilegible): ${f.rel}  (usa --force para reemplazar)`)
+      skipped++
+      continue
+    }
+  }
 
   if (fs.existsSync(to) && f.keep && !force) {
     console.log(`  skip (existe): ${f.rel}`)
@@ -84,7 +166,7 @@ for (const f of FILES) {
 }
 
 console.log("")
-console.log(`Resumen: ${copied} copiados, ${skipped} omitidos.`)
+console.log(`Resumen: ${copied} copiados, ${merged} fusionados, ${skipped} omitidos.`)
 console.log("")
 console.log("Siguiente:")
 console.log("  1. Edita AGENTS.md y CLAUDE.md (descripción, build, invariantes)")

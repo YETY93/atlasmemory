@@ -43,6 +43,29 @@ claude
 | 3 | **Reiniciar** la sesión | `.mcp.json` y las skills se cargan al iniciar, no en caliente |
 | 4 | Editar los `{{PLACEHOLDERS}}` | El agente los lee literalmente |
 
+## ¿Y si el proyecto ya tiene `.opencode/`, `.claude/` o `.mcp.json`?
+
+El instalador **no reemplaza carpetas**: copia una lista fija de archivos, así que
+todo lo tuyo que no esté en esa lista (otras tools, otras skills, `settings.local.json`)
+queda intacto.
+
+Los dos archivos de **config acumulativa** se **fusionan**, no se pisan:
+
+| Archivo | Comportamiento |
+|---------|----------------|
+| `.mcp.json` | Conserva tus servidores y añade solo `mcpServers.atlasmemory` |
+| `.opencode/opencode.json` | Conserva tu config y añade `AGENTS.md`/`CLAUDE.md` a `instructions` |
+| `AGENTS.md` / `CLAUDE.md` | Se omiten si ya existen (no pisa tu documentación) |
+| JSON de config corrupto | Se omite y avisa; solo `--force` lo reemplaza |
+
+Es **idempotente**: reinstalar no duplica entradas ni reordena tu configuración.
+
+```text
+  merge: .mcp.json  (fusionado (conserva: github, postgres))
+  merge: .opencode/opencode.json  (fusionado (+ instructions: AGENTS.md, CLAUDE.md))
+  skip (existe): AGENTS.md
+```
+
 ## Instalación (OpenCode)
 
 Igual que arriba, pero el paso 3 es `opencode` desde la raíz. Las tools no llevan
