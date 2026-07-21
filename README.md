@@ -54,8 +54,10 @@ Las tools son las mismas cinco en ambos clientes. En Claude Code llevan el prefi
 ```text
 atlasmemory/
 ├── README.md
+├── QUICKSTART.md
 ├── LICENSE
-├── install.sh
+├── install.mjs                    ← instalador cross-platform (Node)
+├── install.sh                     ← wrapper Linux/macOS → install.mjs
 ├── AGENTS.md                      ← reglas (OpenCode)
 ├── CLAUDE.md                      ← reglas (Claude Code)
 ├── .mcp.json                      ← registro del servidor MCP
@@ -84,10 +86,17 @@ atlasmemory/
 ```bash
 git clone https://github.com/YETY93/atlasmemory.git
 cd atlasmemory
+
+# Cross-platform (Windows / Linux / macOS) — recomendado:
+node install.mjs /ruta/al/proyecto
+node install.mjs /ruta/al/proyecto --force   # sobrescribe
+
+# Atajo en Linux/macOS (wrapper que llama a install.mjs):
 ./install.sh /ruta/al/proyecto
-# o con sobrescritura:
-./install.sh /ruta/al/proyecto --force
 ```
+
+> El instalador es Node (mismo runtime que el resto). `install.sh` es solo un wrapper;
+> en Windows usa `node install.mjs`.
 
 Copia manual:
 

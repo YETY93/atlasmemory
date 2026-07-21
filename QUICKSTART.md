@@ -16,7 +16,8 @@ hay 4 pasos obligatorios.
 # 1) Traer la plantilla e instalarla en tu proyecto
 git clone https://github.com/YETY93/atlasmemory.git
 cd atlasmemory
-./install.sh /ruta/al/proyecto        # usa --force para sobrescribir
+node install.mjs /ruta/al/proyecto    # cross-platform; --force para sobrescribir
+#   (Linux/macOS también: ./install.sh /ruta/al/proyecto)
 
 # 2) En el proyecto destino: editar placeholders y generar la memoria
 cd /ruta/al/proyecto
