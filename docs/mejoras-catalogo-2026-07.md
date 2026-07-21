@@ -1,5 +1,7 @@
 # Mejoras de catálogo (2026-07-21)
 
+Plantilla pública: atlasmemory.
+
 Aplicación en plantilla de `evaluacion-scripts.md` (cambios 1–7).
 
 | Área | Cambio |

@@ -1,0 +1,14 @@
+# Generated project memory (never commit in the template)
+.opencode/memory/catalog.json
+.opencode/memory/meta.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+*.swp
+
+# Node
+node_modules/

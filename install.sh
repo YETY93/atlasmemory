@@ -15,7 +15,7 @@ if [[ -z "$DEST" ]]; then
 fi
 
 DEST="$(cd "$DEST" && pwd)"
-echo "Instalando memoria de proyecto en: $DEST"
+echo "Instalando atlasmemory en: $DEST"
 echo "Desde plantilla: $SRC"
 
 copy_file() {

@@ -1,4 +1,4 @@
-# AGENTS.md — {{PROJECT_NAME}}
+# AGENTS.md — {{PROJECT_NAME}} (plantilla atlasmemory)
 
 Memoria del proyecto para agentes de IA.
 
