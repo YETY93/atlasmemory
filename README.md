@@ -4,13 +4,38 @@
 
 > **El agente consulta conocimiento, no redescubre el repositorio.**
 
-Plantilla portable: se instala en cada repo Java y genera un catálogo (componentes, capas, relaciones) para decidir **REUSE_EXISTING** vs **CREATE_NEW** antes de crear `*Data`, puertos `I*`, `*UC`, mappers o REST.
+Plantilla portable: se instala en un repo y genera un catálogo (componentes, capas, relaciones) para decidir **REUSE_EXISTING** vs **CREATE_NEW** antes de crear `*Data`, puertos `I*`, `*UC`, mappers o REST.
+
+> ### ☕ Pensado para proyectos **Java**
+>
+> El **modelo de conocimiento** (componentes, relaciones, capacidades, reglas) es
+> agnóstico de lenguaje, pero **la implementación actual solo indexa Java**:
+>
+> - El indexer recorre `*/src/main/java/**/*.java` (proyectos Maven multi-módulo).
+> - Clasifica por convenciones **hexagonales**: `*Data`, `I*`, `*UC`, `*RS`, `@Entity`, `*Mapper`.
+> - Los checklists de `CREATE_NEW` asumen Jakarta EE (`@Stateless`, `@Produces`, JPA).
+>
+> **En un proyecto que no sea Java, el catálogo saldrá vacío.** No es un bug: falta el
+> *binding* de ese lenguaje. Soportar Kotlin, Go o TypeScript significa escribir un
+> indexer nuevo — el resto (store, tools, MCP, skills) se reutiliza tal cual.
+>
+> Ver [Personalizar por proyecto](#personalizar-por-proyecto) y [QUICKSTART.md](./QUICKSTART.md).
 
 No es un monorepo de negocio (p. ej. Clarisa): es solo la plantilla de memoria + indexer + tools.
 
 ## Qué resuelve
 
 Cuando un agente necesita un adaptador o caso de uso, suele crearlo de cero aunque ya exista. atlasmemory indexa el código y expone tools para reutilizar lo existente.
+
+## Compatibilidad
+
+| Aspecto | Estado |
+|---------|--------|
+| **Lenguaje** | ☕ **Java** (Maven multi-módulo). Otros lenguajes: requieren indexer propio |
+| **Arquitectura** | Hexagonal / ports & adapters. Otras: ajustar `atlasmemory.config.json` |
+| **Clientes** | ✅ OpenCode · ✅ Claude Code (MCP) |
+| **Sistema operativo** | ✅ Windows · ✅ Linux · ✅ macOS |
+| **Dependencias** | Solo Node.js 18+ (sin `npm install`) |
 
 ## Arquitectura: un núcleo, dos clientes
 
@@ -45,9 +70,9 @@ Las tools son las mismas cinco en ambos clientes. En Claude Code llevan el prefi
 
 ## Requisitos
 
-- Node.js 18+ (probado con 22)
+- Node.js 18+ (probado con 22) — sin `npm install`
 - **OpenCode** con custom tools (`.opencode/tools/`), y/o **Claude Code** con MCP
-- Fuentes en `*/src/main/java/**/*.java`
+- **Proyecto Java** con fuentes en `*/src/main/java/**/*.java` (Maven multi-módulo)
 
 ## Contenido
 

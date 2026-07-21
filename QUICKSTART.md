@@ -8,7 +8,9 @@ hay 4 pasos obligatorios.
 - **Node.js 18+** (probado con 22). No hace falta `npm install`: el servidor MCP y el
   indexer son cero dependencias.
 - **Claude Code** y/o **OpenCode**.
-- Fuentes Java en `*/src/main/java/**/*.java` (ver "Otros lenguajes/arquitecturas" abajo).
+- ☕ **Proyecto Java** (Maven multi-módulo) con fuentes en `*/src/main/java/**/*.java`.
+  El indexer actual **solo lee Java**: en otro lenguaje el catálogo saldrá vacío
+  (ver "Otros lenguajes o arquitecturas" abajo).
 
 ## Instalación (Claude Code)
 
