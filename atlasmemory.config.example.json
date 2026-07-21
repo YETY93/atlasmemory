@@ -1,0 +1,34 @@
+{
+  "//": "Config OPCIONAL de atlasmemory. Copia este archivo como 'atlasmemory.config.json' en la raíz del proyecto y edita los checklists a tus convenciones. Si no existe, se usan los defaults (binding Clarisa / hexagonal Jakarta EE). Lo consumen ambos bindings (OpenCode y MCP).",
+  "createHints": {
+    "default": {
+      "layers": ["port", "data"],
+      "checklist": [
+        "Crear IXxxData en usecase/port",
+        "Crear XxxData @Stateless en ejb/data extends CRUDData implements IXxxData",
+        "emQuery para lecturas / emCommand para escrituras",
+        "Filtrar por tenant en consultas de datos del tenant",
+        "Si hay UC nuevo: agregar @Produces en UseCaseConfig",
+        "Tras crear: catalog_reindex"
+      ]
+    },
+    "usecase": {
+      "layers": ["usecase", "config"],
+      "checklist": [
+        "Crear *UC como POJO en usecase (constructor con puertos)",
+        "Agregar @Produces en web/config/UseCaseConfig",
+        "No poner lógica de JPA en el UC",
+        "Tras crear: catalog_reindex"
+      ]
+    },
+    "rest": {
+      "layers": ["rest"],
+      "checklist": [
+        "Crear *RS en web/rest",
+        "Inyectar UC producido por UseCaseConfig",
+        "Usar @RolesAllowed y tenant del UsuarioPrincipal",
+        "Tras crear: catalog_reindex"
+      ]
+    }
+  }
+}

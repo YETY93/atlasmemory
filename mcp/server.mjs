@@ -219,8 +219,12 @@ function staleFields(catalog) {
   }
 }
 
-function createChecklist(kindHint) {
-  const base = {
+/**
+ * Checklists por defecto (binding Clarisa / hexagonal Jakarta EE).
+ * Se sobrescriben por proyecto con `atlasmemory.config.json` → `createHints`.
+ */
+const DEFAULT_CHECKLISTS = {
+  default: {
     layers: ["port", "data"],
     checklist: [
       "Crear IXxxData en usecase/port",
@@ -230,30 +234,57 @@ function createChecklist(kindHint) {
       "Si hay UC nuevo: agregar @Produces en UseCaseConfig",
       "Tras crear: catalog_reindex",
     ],
+  },
+  usecase: {
+    layers: ["usecase", "config"],
+    checklist: [
+      "Crear *UC como POJO en usecase (constructor con puertos)",
+      "Agregar @Produces en web/config/UseCaseConfig",
+      "No poner lógica de JPA en el UC",
+      "Tras crear: catalog_reindex",
+    ],
+  },
+  rest: {
+    layers: ["rest"],
+    checklist: [
+      "Crear *RS en web/rest",
+      "Inyectar UC producido por UseCaseConfig",
+      "Usar @RolesAllowed y tenant del UsuarioPrincipal",
+      "Tras crear: catalog_reindex",
+    ],
+  },
+}
+
+const CONFIG_FILE = "atlasmemory.config.json"
+let configCache = null
+
+/** Config opcional del proyecto. Si no existe o es inválida → null (usa defaults). */
+function loadConfig(root) {
+  const file = path.join(root, CONFIG_FILE)
+  let mtimeMs = null
+  try {
+    mtimeMs = fs.statSync(file).mtimeMs
+  } catch {
+    return null // no hay config: comportamiento por defecto
   }
-  if (kindHint === "usecase") {
-    return {
-      layers: ["usecase", "config"],
-      checklist: [
-        "Crear *UC como POJO en usecase (constructor con puertos)",
-        "Agregar @Produces en web/config/UseCaseConfig",
-        "No poner lógica de JPA en el UC",
-        "Tras crear: catalog_reindex",
-      ],
-    }
+  if (configCache && configCache.root === root && configCache.mtimeMs === mtimeMs) {
+    return configCache.value
   }
-  if (kindHint === "rest") {
-    return {
-      layers: ["rest"],
-      checklist: [
-        "Crear *RS en web/rest",
-        "Inyectar UC producido por UseCaseConfig",
-        "Usar @RolesAllowed y tenant del UsuarioPrincipal",
-        "Tras crear: catalog_reindex",
-      ],
-    }
+  let value = null
+  try {
+    value = JSON.parse(fs.readFileSync(file, "utf8"))
+  } catch (e) {
+    process.stderr.write(`[atlasmemory] ${CONFIG_FILE} ilegible (${e.message}); usando defaults\n`)
+    value = null
   }
-  return base
+  configCache = { root, mtimeMs, value }
+  return value
+}
+
+function createChecklist(kindHint, root) {
+  const hints = loadConfig(root)?.createHints
+  const source = hints && typeof hints === "object" ? hints : DEFAULT_CHECKLISTS
+  return source[kindHint] || source.default || DEFAULT_CHECKLISTS.default
 }
 
 function relatedOf(catalog, component, depth = 1) {
@@ -374,7 +405,8 @@ function toolGet(args) {
 }
 
 function toolExists(args) {
-  const catalog = loadCatalog(projectRoot())
+  const root = projectRoot()
+  const catalog = loadCatalog(root)
   if (catalog.error) return JSON.stringify(catalog, null, 2)
 
   const fuzzy = args.fuzzy !== false
@@ -443,7 +475,7 @@ function toolExists(args) {
       match: null,
       nearMisses,
       advice: "CREATE_NEW",
-      impact: { createHint: createChecklist(kindHint) },
+      impact: { createHint: createChecklist(kindHint, root) },
     },
     null,
     2

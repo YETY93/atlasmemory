@@ -32,6 +32,7 @@ copy_file() {
 
 copy_file "$SRC/scripts/index-catalog.mjs" "$DEST/scripts/index-catalog.mjs"
 copy_file "$SRC/scripts/smoke-catalog.mjs" "$DEST/scripts/smoke-catalog.mjs"
+copy_file "$SRC/atlasmemory.config.example.json" "$DEST/atlasmemory.config.example.json"
 
 # Binding OpenCode (plugin)
 copy_file "$SRC/.opencode/tools/catalog.ts" "$DEST/.opencode/tools/catalog.ts"

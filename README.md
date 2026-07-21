@@ -140,8 +140,24 @@ catalog_exists name=FooBarNoExisteData
 
 | Archivo | Acción |
 |---------|--------|
-| `AGENTS.md` | Descripción, build, invariantes |
+| `AGENTS.md` / `CLAUDE.md` | Descripción, build, invariantes (placeholders `{{PROJECT_*}}`) |
+| `atlasmemory.config.json` | Checklists de `CREATE_NEW` a tus convenciones (ver abajo) |
 | Tags en `index-catalog.mjs` | Opcional (`extractTags`) |
+
+### Dos supuestos de Clarisa (importante para otros proyectos)
+
+El arquetipo nace del binding Clarisa. Para **otro repo Clarisa** es copy-paste; para un
+Java distinto hay que ajustar dos cosas:
+
+1. **Indexer Java/Maven hexagonal.** `index-catalog.mjs` recorre `src/main/java` y clasifica
+   por convenciones (`*Data`, `I*`, `*UC`, `*RS`, `@Entity`, `*Mapper`). Otro stack →
+   editar el indexer.
+2. **Checklists de `CREATE_NEW`.** Mencionan `CRUDData`, `emQuery/emCommand`, `tenant`,
+   `@Produces`. Esto **sí es configurable sin tocar código**: copia
+   `atlasmemory.config.example.json` como `atlasmemory.config.json` en la raíz y edita
+   `createHints`. Ambos bindings lo leen; sin el archivo, usan los defaults de Clarisa.
+
+Ver [QUICKSTART.md](./QUICKSTART.md) para el flujo de instalación paso a paso.
 
 ## Documentación
 
