@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "atlasmemory": {
+      "command": "node",
+      "args": ["mcp/server.mjs"]
+    }
+  }
+}

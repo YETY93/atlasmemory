@@ -32,10 +32,16 @@ copy_file() {
 
 copy_file "$SRC/scripts/index-catalog.mjs" "$DEST/scripts/index-catalog.mjs"
 copy_file "$SRC/scripts/smoke-catalog.mjs" "$DEST/scripts/smoke-catalog.mjs"
+
+# Binding OpenCode (plugin)
 copy_file "$SRC/.opencode/tools/catalog.ts" "$DEST/.opencode/tools/catalog.ts"
 copy_file "$SRC/.opencode/skills/reuse-first/SKILL.md" "$DEST/.opencode/skills/reuse-first/SKILL.md"
 copy_file "$SRC/.opencode/opencode.json" "$DEST/.opencode/opencode.json"
 copy_file "$SRC/.opencode/memory/.gitignore" "$DEST/.opencode/memory/.gitignore"
+
+# Binding Claude Code (MCP) — aditivo, comparte el mismo catalog.json
+copy_file "$SRC/mcp/server.mjs" "$DEST/mcp/server.mjs"
+copy_file "$SRC/.mcp.json" "$DEST/.mcp.json"
 
 if [[ ! -f "$DEST/AGENTS.md" || "$FORCE" == "--force" ]]; then
   if [[ -f "$DEST/AGENTS.md" && "$FORCE" == "--force" ]]; then
@@ -47,6 +53,13 @@ if [[ ! -f "$DEST/AGENTS.md" || "$FORCE" == "--force" ]]; then
   fi
 else
   echo "  skip (existe): $DEST/AGENTS.md"
+fi
+
+if [[ ! -f "$DEST/CLAUDE.md" || "$FORCE" == "--force" ]]; then
+  cp "$SRC/CLAUDE.md" "$DEST/CLAUDE.md"
+  echo "  ok: $DEST/CLAUDE.md (edita placeholders {{PROJECT_*}})"
+else
+  echo "  skip (existe): $DEST/CLAUDE.md"
 fi
 
 if [[ -f "$SRC/docs/arquetipo-catalogo-agente.md" ]]; then
@@ -61,7 +74,8 @@ fi
 
 echo ""
 echo "Siguiente:"
-echo "  1. Edita $DEST/AGENTS.md (descripción, build, invariantes)"
+echo "  1. Edita AGENTS.md y CLAUDE.md (descripción, build, invariantes)"
 echo "  2. cd $DEST && node scripts/index-catalog.mjs"
 echo "  3. node scripts/smoke-catalog.mjs"
-echo "  4. Abre opencode en $DEST y prueba catalog_exists"
+echo "  4a. OpenCode:     abre opencode en $DEST y prueba catalog_exists"
+echo "  4b. Claude Code:  reinicia claude (carga .mcp.json) y prueba mcp__atlasmemory__catalog_exists"
