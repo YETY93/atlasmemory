@@ -41,6 +41,14 @@ Orden de creación si hace falta algo nuevo (hexagonal típico):
 
 Store: `.opencode/memory/catalog.json` (generado por `scripts/index-catalog.mjs`).
 
+### Si este repo está en un workspace (opcional)
+
+Cuando existe `.opencode/tools/workspace.ts`, este repo puede consultar las memorias de
+sus repos hermanos con `workspace_search`. Se usa **solo después** de que
+`catalog_exists` local devuelva `CREATE_NEW`, y devuelve `PRECEDENT_FOUND`: patrones a
+copiar, no componentes importables. Ver la skill `precedent-first` y
+`docs/dos-niveles.md`.
+
 ## Nomenclatura (ajustar al proyecto)
 
 | Rol | Patrón típico |

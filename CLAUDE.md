@@ -36,6 +36,14 @@ Store compartido con OpenCode: `.opencode/memory/catalog.json`
 > Si una respuesta trae `stale: true`, el índice está desactualizado respecto a las
 > fuentes `.java` → ejecuta `catalog_reindex` antes de confiar en el resultado.
 
+### Si este repo está en un workspace (opcional)
+
+Cuando además hay un servidor `atlasworkspace` en `.mcp.json`, este repo puede consultar
+las memorias de sus repos hermanos con `mcp__atlasworkspace__workspace_search`. Se usa
+**solo después** de que `catalog_exists` local devuelva `CREATE_NEW`, y devuelve
+`PRECEDENT_FOUND`: patrones a copiar, no componentes importables. Ver la skill
+`precedent-first` y `docs/dos-niveles.md`.
+
 ## Reuse-first (obligatorio)
 
 **Antes de crear** cualquier adaptador de persistencia (`*Data`), puerto (`I*`),

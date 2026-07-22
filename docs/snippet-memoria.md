@@ -54,3 +54,41 @@ Orden de creación cuando algo nuevo hace falta de verdad:
 ```
 
 ## ✂️ Hasta aquí
+
+---
+
+# Bloque extra: si además instalaste el workspace (nivel 2)
+
+Pegá esto **después** del bloque anterior, solo en los repos que forman parte de un
+workspace cross-repo.
+
+## ✂️ Copiar desde aquí
+
+```markdown
+### Precedente cross-repo (workspace)
+
+Este repo forma parte de un workspace de atlasmemory: hay un segundo servidor MCP
+(`atlasworkspace`) que ve las memorias de los repos hermanos.
+
+| Tool | Cuándo usarla |
+|------|---------------|
+| `mcp__atlasworkspace__workspace_search` | Cuando `catalog_exists` local devuelve `CREATE_NEW` |
+| `mcp__atlasworkspace__workspace_get` | Ver cómo se implementó en el otro repo |
+| `mcp__atlasworkspace__workspace_projects` | Qué repos entran y si el índice está fresco |
+| `mcp__atlasworkspace__workspace_reindex` | Tras reindexar algún repo |
+
+**Precedente, no reuso.** El workspace nunca devuelve `REUSE_EXISTING`, devuelve
+`PRECEDENT_FOUND`: los repos no dependen entre sí por Maven, así que un componente ajeno
+**no es importable**. Lo que traés es el patrón (qué puertos usó, cómo dividió capas,
+qué métodos expuso), no la clase. Si sí existe dependencia Maven entre los dos repos,
+entonces es reuso de verdad: importalo en vez de duplicarlo.
+
+Orden obligatorio: **primero la memoria local** (autoridad), después el workspace
+(consultivo). Si `catalog_exists` dice `REUSE_EXISTING`, no consultes el workspace.
+
+Buscá por el concepto de dominio pelado (`DocumentoEquivalente`), no por el nombre
+completo del candidato: el scoring es por substring y `IDocEquivalentePosData` no
+encuentra `DocEquivalentePosData`.
+```
+
+## ✂️ Hasta aquí
