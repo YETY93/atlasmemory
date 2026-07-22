@@ -58,6 +58,35 @@ catalog.json:     1.9 MB
 
 ---
 
+## 2-bis. Estado de resolución
+
+> Actualización (2026-07-22): los hallazgos 1–7 están **resueltos en código**.
+> Esta sección deja de ser "propuesta" y pasa a ser registro de implementación.
+
+| # | Hallazgo | Estado | Dónde | Nota |
+|---|----------|--------|-------|------|
+| 1 | Falso-positivo REUSE por sufijo | ✅ Resuelto | `catalog.ts`/`server.mjs` `scoreMatch` + `exists` | REUSE solo con `name === q` (exacto). Sufijo genérico penaliza a 0.4. |
+| 2 | Staleness no cableada | ✅ Resuelto | `loadCatalog` | Ver aclaración abajo. |
+| 3 | Keywords de control como métodos | ✅ Resuelto | `index-catalog.mjs` `extractMethods` (`CTRL` Set ampliado) | 0 ghosts en smoke. |
+| 4 | `injects` en contrato pero 0 datos | ✅ Resuelto (opción A) | `catalog_related` desc | Se quitó `injects` de la descripción; el indexer sigue emitiendo solo `uses`. |
+| 5 | Truncamiento silencioso (cap 80) | ✅ Resuelto | `index-catalog.mjs` + `summarize` | Campo `methodsTruncated: boolean` en componente y summary. |
+| 6 | Alias `artifacts`/`edges` + sin cache | ✅ Resuelto | `index-catalog.mjs` + `loadCatalog` | `catalog.json` sin alias; cache por mtime del archivo. |
+| 7 | `loadCatalog` sin try/catch | ✅ Resuelto | `loadCatalog` | `emptyCatalogError` ante catálogo ausente/ilegible. |
+
+### Aclaración del hallazgo #2 (staleness)
+
+La detección de índice desactualizado **compara `newestJavaMtime(root)`** (el `mtime`
+más reciente de los `**/src/main/java/**/*.java`) **contra `meta.generatedAt`**:
+
+```js
+const newest = newestJavaMtime(root)
+const stale = Boolean(newest) && Number.isFinite(generatedMs) && newest > generatedMs
+```
+
+**No** recompara `meta.contentHash`. El `contentHash` permanece en `meta.json` como huella de integridad auditada, pero **no participa** en la decisión de `stale`/`staleReason`.
+
+---
+
 ## 3. Cambios propuestos (con justificación)
 
 Cada cambio incluye: **problema**, **evidencia**, **causa raíz**, **solución** y
@@ -65,7 +94,7 @@ Cada cambio incluye: **problema**, **evidencia**, **causa raíz**, **solución**
 
 ---
 
-### 🔴 CAMBIO 1 — Eliminar el falso-positivo REUSE (prioridad máxima)
+### ✅ Resuelto — 🔴 CAMBIO 1 — Eliminar el falso-positivo REUSE (prioridad máxima)
 
 **Archivo:** `.opencode/tools/catalog.ts` — función `scoreMatch` + `exists`
 
@@ -121,7 +150,7 @@ destruye la confianza del agente en toda la memoria.
 
 ---
 
-### 🔴 CAMBIO 2 — Cablear la detección de staleness (índice desactualizado)
+### ✅ Resuelto — 🔴 CAMBIO 2 — Cablear la detección de staleness (índice desactualizado)
 
 **Archivo:** `.opencode/tools/catalog.ts` — `loadCatalog`; y `scripts/index-catalog.mjs`
 
@@ -157,7 +186,7 @@ confianza.
 
 ---
 
-### 🟠 CAMBIO 3 — Filtrar keywords de control como nombres de método
+### ✅ Resuelto — 🟠 CAMBIO 3 — Filtrar keywords de control como nombres de método
 
 **Archivo:** `scripts/index-catalog.mjs` — `extractMethods`
 
@@ -194,7 +223,7 @@ scoring por método (`methodHits`), dando la impresión de una API que no existe
 
 ---
 
-### 🟠 CAMBIO 4 — Emitir `injects` o quitarlo del contrato
+### ✅ Resuelto — 🟠 CAMBIO 4 — Emitir `injects` o quitarlo del contrato
 
 **Archivos:** `.opencode/tools/catalog.ts` (descripción de `catalog_related`);
 `scripts/index-catalog.mjs` (`buildRelations`)
@@ -220,7 +249,7 @@ consulte algo que siempre vuelve vacío y pierda confianza en la tool.
 
 ---
 
-### 🟠 CAMBIO 5 — Señalar truncamiento en el cap de 80 métodos
+### ✅ Resuelto — 🟠 CAMBIO 5 — Señalar truncamiento en el cap de 80 métodos
 
 **Archivo:** `scripts/index-catalog.mjs` — `extractMethods` / `parseJavaFile`
 
@@ -243,7 +272,7 @@ utilidades grandes, que son justo las que más se quieren reutilizar.
 
 ---
 
-### 🟡 CAMBIO 6 — Eliminar alias duplicados y cachear el catálogo
+### ✅ Resuelto — 🟡 CAMBIO 6 — Eliminar alias duplicados y cachear el catálogo
 
 **Archivos:** `scripts/index-catalog.mjs` (escritura); `.opencode/tools/catalog.ts`
 (lectura)
@@ -270,7 +299,7 @@ piloto pasa el objetivo <100 ms, pero es deuda innecesaria que crece con el repo
 
 ---
 
-### 🟡 CAMBIO 7 — Endurecer `loadCatalog` ante catálogo corrupto
+### ✅ Resuelto — 🟡 CAMBIO 7 — Endurecer `loadCatalog` ante catálogo corrupto
 
 **Archivo:** `.opencode/tools/catalog.ts` — `loadCatalog`
 

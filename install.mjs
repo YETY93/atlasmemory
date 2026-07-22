@@ -106,6 +106,7 @@ function mergeOpencodeJson(destFile, srcFile) {
  */
 const FILES = [
   // Núcleo compartido
+  { rel: "lib/catalog-engine.mjs" },
   { rel: "scripts/index-catalog.mjs" },
   { rel: "scripts/smoke-catalog.mjs" },
   { rel: "atlasmemory.config.example.json" },
